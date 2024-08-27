@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using HtmlAgilityPack;
@@ -82,7 +83,7 @@ namespace WordToHtmlConverter
                                 currentListType = null;
                             }
 
-                            var paragraphText = paragraph.InnerText;
+                            var paragraphText = GetFormattedText(paragraph);
 
                             // Detect Heading
                             if (paragraph.ParagraphProperties?.ParagraphStyleId?.Val != null)
@@ -136,6 +137,22 @@ namespace WordToHtmlConverter
                     
                 File.WriteAllText(outputFilePath, cleanedHtmlContent);
             }
+        }
+
+        static string GetFormattedText(OpenXmlElement element)
+        {
+            string formattedText = string.Empty;
+
+            foreach(var run in element.Elements<Run>())
+            {
+                string runText = run.InnerText;
+                if (run.RunProperties?.Bold != null)
+                {
+                    runText = $"<b>{runText}</b>";
+                }
+                formattedText += runText;
+            }
+            return formattedText;
         }
 
         static string GetListItemStyle(WordprocessingDocument doc, int numId)
